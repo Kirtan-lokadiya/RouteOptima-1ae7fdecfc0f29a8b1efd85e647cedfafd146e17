@@ -1,0 +1,61 @@
+
+# Python
+*.pyc
+*.pyo
+_pycache_/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Build and distribution folders
+build/
+dist/
+*.egg-info/
+
+# PyInstaller
+*.spec
+
+# Pytest
+.cache/
+*.cover
+*.coverage
+nosetests.xml
+coverage.xml
+*.hypothesis/
+
+# mypy
+.mypy_cache/
+
+# Django
+*.log
+*.pot
+*.py[cod]
+*.db
+*.sqlite3
+
+# Flask
+instance/
+.webassets-cache
+
+# Environments
+*.env
+.env.*
+*.venv/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
