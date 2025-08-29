@@ -86,3 +86,81 @@ def show_map(timeslot, index):
     route = assignments[index]['Route'].split(' -> ')
     map_html = generate_map(route, shipments_df)
     return render_template('map.html', map_html=map_html, timeslot=timeslot)
+
+@optimization_bp.route('/open_maps/<timeslot>/<int:index>')
+#@login_required
+def open_maps(timeslot, index):
+    shipments_df = cache.get('excel_data')
+    assignments = cache.get('assignments', {}).get(timeslot, [])
+    if shipments_df is None or not assignments:
+        return redirect(url_for('optimization.upload_file'))
+    
+    route = assignments[index]['Route'].split(' -> ')
+    # Get coordinates for the route
+    coordinates = []
+    
+    for stop in route:
+        if stop == 'Shop':
+            # Use first row coordinates as shop location
+            lat, lon = shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']
+        else:
+            # Find shipment coordinates
+            shipment = shipments_df[shipments_df['Shipment ID'] == int(stop)]
+            if not shipment.empty:
+                lat, lon = shipment.iloc[0]['Latitude'], shipment.iloc[0]['Longitude']
+            else:
+                continue
+        coordinates.append(f"{lat},{lon}")
+    
+    # Create Google Maps URL with waypoints
+    if len(coordinates) > 1:
+        origin = coordinates[0]
+        destination = coordinates[-1]
+        waypoints = "|".join(coordinates[1:-1]) if len(coordinates) > 2 else ""
+        
+        maps_url = f"https://www.google.com/maps/dir/{origin}/{destination}"
+        if waypoints:
+            maps_url += f"/{waypoints}"
+        
+        return redirect(maps_url)
+    
+    return redirect(url_for('optimization.show_trips', timeslot=timeslot))
+
+@optimization_bp.route('/get_directions/<timeslot>/<int:index>')
+#@login_required
+def get_directions(timeslot, index):
+    shipments_df = cache.get('excel_data')
+    assignments = cache.get('assignments', {}).get(timeslot, [])
+    if shipments_df is None or not assignments:
+        return redirect(url_for('optimization.upload_file'))
+    
+    route = assignments[index]['Route'].split(' -> ')
+    # Get coordinates for the route
+    coordinates = []
+    
+    for stop in route:
+        if stop == 'Shop':
+            # Use first row coordinates as shop location
+            lat, lon = shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']
+        else:
+            # Find shipment coordinates
+            shipment = shipments_df[shipments_df['Shipment ID'] == int(stop)]
+            if not shipment.empty:
+                lat, lon = shipment.iloc[0]['Latitude'], shipment.iloc[0]['Longitude']
+            else:
+                continue
+        coordinates.append(f"{lat},{lon}")
+    
+    # Create Google Maps directions URL
+    if len(coordinates) > 1:
+        origin = coordinates[0]
+        destination = coordinates[-1]
+        waypoints = "|".join(coordinates[1:-1]) if len(coordinates) > 2 else ""
+        
+        directions_url = f"https://www.google.com/maps/dir/{origin}/{destination}?travelmode=driving"
+        if waypoints:
+            directions_url = f"https://www.google.com/maps/dir/{origin}/{waypoints}/{destination}?travelmode=driving"
+        
+        return redirect(directions_url)
+    
+    return redirect(url_for('optimization.show_trips', timeslot=timeslot))
