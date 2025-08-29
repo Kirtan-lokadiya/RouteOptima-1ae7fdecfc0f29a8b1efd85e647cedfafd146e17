@@ -113,14 +113,19 @@ def open_maps(timeslot, index):
         coordinates.append(f"{lat},{lon}")
     
     # Create Google Maps URL with waypoints
-    if len(coordinates) > 1:
+    if len(coordinates) >= 2:
+        # Remove duplicate shop coordinates if route starts and ends at shop
+        if coordinates[0] == coordinates[-1] and len(coordinates) > 2:
+            coordinates = coordinates[:-1]  # Remove last shop
+        
         origin = coordinates[0]
         destination = coordinates[-1]
-        waypoints = "|".join(coordinates[1:-1]) if len(coordinates) > 2 else ""
         
-        maps_url = f"https://www.google.com/maps/dir/{origin}/{destination}"
-        if waypoints:
-            maps_url += f"/{waypoints}"
+        if len(coordinates) > 2:
+            waypoints = "|".join(coordinates[1:-1])
+            maps_url = f"https://www.google.com/maps/dir/{origin}/{destination}?waypoints={waypoints}"
+        else:
+            maps_url = f"https://www.google.com/maps/dir/{origin}/{destination}"
         
         return redirect(maps_url)
     
@@ -152,14 +157,19 @@ def get_directions(timeslot, index):
         coordinates.append(f"{lat},{lon}")
     
     # Create Google Maps directions URL
-    if len(coordinates) > 1:
+    if len(coordinates) >= 2:
+        # Remove duplicate shop coordinates if route starts and ends at shop
+        if coordinates[0] == coordinates[-1] and len(coordinates) > 2:
+            coordinates = coordinates[:-1]  # Remove last shop
+        
         origin = coordinates[0]
         destination = coordinates[-1]
-        waypoints = "|".join(coordinates[1:-1]) if len(coordinates) > 2 else ""
         
-        directions_url = f"https://www.google.com/maps/dir/{origin}/{destination}?travelmode=driving"
-        if waypoints:
-            directions_url = f"https://www.google.com/maps/dir/{origin}/{waypoints}/{destination}?travelmode=driving"
+        if len(coordinates) > 2:
+            waypoints = "|".join(coordinates[1:-1])
+            directions_url = f"https://www.google.com/maps/dir/{origin}/{destination}?waypoints={waypoints}&travelmode=driving"
+        else:
+            directions_url = f"https://www.google.com/maps/dir/{origin}/{destination}?travelmode=driving"
         
         return redirect(directions_url)
     
