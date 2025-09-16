@@ -97,10 +97,16 @@ def assign_shipments(headers, distance_matrix, vehicles):
                 })
     return vehicle_assignments
 
-def generate_map(route, shipments_df):
-    m = folium.Map(location=[shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']], zoom_start=12)
+def generate_map(route, shipments_df, selected_store=None):
+    # Use selected store coordinates if available, otherwise use first row
+    if selected_store:
+        shop_lat, shop_lon = selected_store['latitude'], selected_store['longitude']
+    else:
+        shop_lat, shop_lon = shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']
+    
+    m = folium.Map(location=[shop_lat, shop_lon], zoom_start=12)
     folium.Marker(
-        location=[shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']],
+        location=[shop_lat, shop_lon],
         popup='Shop',
         icon=folium.Icon(color='red', icon='home')
     ).add_to(m)
@@ -111,11 +117,17 @@ def generate_map(route, shipments_df):
             popup=f"Stop {i} (Order {shipment_id})",
             icon=folium.Icon(color='blue', icon='shopping-cart', prefix='fa')
         ).add_to(m)
-    route_coords = [[shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']]]
+    # Use selected store coordinates for route start/end
+    if selected_store:
+        shop_coords = [selected_store['latitude'], selected_store['longitude']]
+    else:
+        shop_coords = [shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']]
+    
+    route_coords = [shop_coords]
     for shipment_id in route[1:-1]:
         shipment = shipments_df[shipments_df['Shipment ID'] == int(shipment_id)].iloc[0]
         route_coords.append([shipment['Latitude'], shipment['Longitude']])
-    route_coords.append([shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']])
+    route_coords.append(shop_coords)
     folium.PolyLine(
         locations=route_coords,
         weight=5,

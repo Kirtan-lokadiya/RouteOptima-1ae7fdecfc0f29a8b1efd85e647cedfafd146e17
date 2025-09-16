@@ -54,6 +54,9 @@ instance/
 .env.*
 *.venv/
 
+# Data files (optional - remove if you want to track Excel files)
+# data/*.xlsx
+
 # macOS
 .DS_Store
 

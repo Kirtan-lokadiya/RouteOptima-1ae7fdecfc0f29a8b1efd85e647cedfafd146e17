@@ -138,10 +138,19 @@
     <div class="card">
         <div class="card-header">
             <h1 class="title"><i class="fas fa-cloud-upload-alt"></i> Upload Excel File</h1>
-            <p class="subtitle">Supported format: .xlsx</p>
+            <p class="subtitle">Supported format: .xlsx with Shipments_Data sheet</p>
         </div>
         <div class="card-body">
-            <form method="POST" enctype="multipart/form-data">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-danger" style="background: #e74c3c; color: white; padding: 1rem; border-radius: 5px; margin-bottom: 1rem;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="POST" enctype="multipart/form-data" id="uploadForm">
                 <div class="mb-4">
                     <div class="upload-input position-relative">
                         <label class="upload-label">
@@ -152,6 +161,7 @@
                         <div class="file-name"></div>
                     </div>
                 </div>
+                <input type="hidden" name="selectedStoreId" id="selectedStoreIdInput">
                 <div class="d-grid">
                     <button type="submit" class="btn btn-primary">
                         <span class="me-2">Process File</span>
@@ -169,6 +179,14 @@
         document.querySelector('input[type="file"]').addEventListener('change', function(e) {
             const fileName = e.target.files[0].name;
             document.querySelector('.file-name').textContent = `Selected file: ${fileName}`;
+        });
+        
+        // Handle selected store ID from session storage
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            const selectedStoreId = sessionStorage.getItem('selectedStoreId');
+            if (selectedStoreId) {
+                document.getElementById('selectedStoreIdInput').value = selectedStoreId;
+            }
         });
     </script>
 </body>

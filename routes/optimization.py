@@ -1,12 +1,14 @@
 # routes/optimization.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
 import pandas as pd
+import json
 from utils.route_utils import (
     insert_shop_location,
     calculate_distance_matrix_with_shop,
     assign_shipments,
     generate_map
 )
+from models.config_manager import ConfigManager
 
 # Import our custom login_required decorator
 from decorators import login_required
@@ -28,7 +30,6 @@ def home():
     return render_template('index.html')
 
 @optimization_bp.route('/upload', methods=['GET', 'POST'])
-#@login_required
 def upload_file():
     if request.method == 'POST':
         if 'file' not in request.files:
@@ -38,10 +39,39 @@ def upload_file():
             return redirect(request.url)
         if file:
             try:
-                cache['excel_data'] = pd.read_excel(file, sheet_name="Shipments_Data")
-                current_app.logger.info("Excel file loaded successfully")
+                # Try different possible sheet names
+                xl_file = pd.ExcelFile(file)
+                sheet_names = xl_file.sheet_names
+                
+                # Look for shipment data sheet
+                shipment_sheet = None
+                for sheet in sheet_names:
+                    if 'shipment' in sheet.lower() or 'data' in sheet.lower():
+                        shipment_sheet = sheet
+                        break
+                
+                if not shipment_sheet:
+                    shipment_sheet = sheet_names[0]  # Use first sheet if no match
+                
+                cache['excel_data'] = pd.read_excel(file, sheet_name=shipment_sheet)
+                current_app.logger.info(f"Excel file loaded successfully from sheet: {shipment_sheet}")
+                
+                # Handle store selection from dashboard
+                if 'selectedStoreId' in request.form:
+                    config = ConfigManager()
+                    stores = config.get_stores()
+                    store_id = int(request.form['selectedStoreId'])
+                    selected_store = next((s for s in stores if s['Store_ID'] == store_id), None)
+                    if selected_store:
+                        session['selected_store'] = {
+                            'id': selected_store['Store_ID'],
+                            'latitude': selected_store['Latitude'],
+                            'longitude': selected_store['Longitude']
+                        }
+                    
             except Exception as e:
                 current_app.logger.error("Error reading Excel file: %s", e)
+                flash(f"Error reading Excel file: {str(e)}", "error")
                 return redirect(request.url)
             return redirect(url_for('optimization.select_timeslot'))
     return render_template('upload.html')
@@ -60,17 +90,23 @@ def show_trips(timeslot):
     shipments_df = cache.get('excel_data')
     if shipments_df is None:
         return redirect(url_for('optimization.upload_file'))
-    store_lat, store_lon = shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']
+    
+    # Get selected store coordinates from session or use default
+    selected_store = session.get('selected_store')
+    if selected_store:
+        store_lat, store_lon = selected_store['latitude'], selected_store['longitude']
+    else:
+        store_lat, store_lon = shipments_df.iloc[0]['Latitude'], shipments_df.iloc[0]['Longitude']
+    
     df_timeslot = shipments_df[shipments_df['Delivery Timeslot'] == timeslot]
     df_timeslot_with_shop = insert_shop_location(df_timeslot, store_lat, store_lon)
     dist_matrix = calculate_distance_matrix_with_shop(df_timeslot_with_shop)
     headers = ['Shop'] + df_timeslot['Shipment ID'].astype(str).tolist()
 
-    vehicles = [
-        {"type": "3W", "count": 50, "capacity": 5, "max_radius": 15, "max_trip_time": 240},
-        {"type": "4W-EV", "count": 25, "capacity": 8, "max_radius": 20, "max_trip_time": 300},
-        {"type": "4W", "count": float('inf'), "capacity": 25, "max_radius": float('inf'), "max_trip_time": 480}
-    ]
+    # Get vehicles from config
+    config = ConfigManager()
+    vehicles = config.get_vehicles()
+    
     assignments = assign_shipments(headers, dist_matrix.tolist(), vehicles)
     cache['assignments'][timeslot] = assignments
     current_app.logger.info("Trip assignments calculated for timeslot: %s", timeslot)

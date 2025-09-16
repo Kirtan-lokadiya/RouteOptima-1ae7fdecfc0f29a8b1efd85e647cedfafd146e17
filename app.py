@@ -2,6 +2,8 @@ import logging
 from flask import Flask
 from config import Config
 from routes import auth_bp, optimization_bp
+from routes.dashboard import dashboard_bp
+from routes.excel_template import excel_bp
 from flask_mail import Mail
 from flask_bcrypt import Bcrypt
 
@@ -27,6 +29,8 @@ def create_app():
     # ----- Register Blueprints -----
     app.register_blueprint(auth_bp)
     app.register_blueprint(optimization_bp)
+    app.register_blueprint(dashboard_bp)
+    app.register_blueprint(excel_bp)
 
     return app
 

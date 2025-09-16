@@ -212,8 +212,7 @@
         <a onclick="showSection('features')">Features</a>
         <a onclick="showSection('about')">About</a>
         <a onclick="showSection('contact')">Contact</a>
-        <a id="loginButton" href="/login" style="display: none;">Login</a>
-        <a id="logoutButton" href="#" onclick="logout()" style="display: none;">Logout</a>
+        <a href="/dashboard">Dashboard</a>
       </div>
     </nav>
 
@@ -222,7 +221,10 @@
       <div class="hero-content">
         <h1>Optimize Your Routes Smartly</h1>
         <p>Save time and reduce costs with AI-powered route optimization</p>
-        <a href="{{ url_for('optimization.upload_file') }}" class="cta-button">Get Started</a>
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+          <a href="{{ url_for('optimization.upload_file') }}" class="cta-button">Get Started</a>
+          <a href="/dashboard" class="cta-button" style="background: #27ae60;">Dashboard</a>
+        </div>
       </div>
     </section>
 
@@ -320,32 +322,7 @@
         }
       }
 
-      document.addEventListener("DOMContentLoaded", () => {
-        const loginButton = document.getElementById("loginButton");
-        const logoutButton = document.getElementById("logoutButton");
-
-        // Check if JWT token exists in localStorage
-        const jwtToken = localStorage.getItem("jwtToken");
-
-        if (jwtToken) {
-          // User is logged in
-          loginButton.style.display = "none";
-          logoutButton.style.display = "block";
-        } else {
-          // User is not logged in
-          loginButton.style.display = "block";
-          logoutButton.style.display = "none";
-        }
-      });
-
-      // Logout function
-      function logout() {
-        // Remove JWT token from localStorage
-        localStorage.removeItem("jwtToken");
-
-        // Redirect to the home page
-        window.location.href = "/";
-      }
+      // No login functionality needed
     </script>
   </body>
 </html>
