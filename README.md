@@ -115,7 +115,7 @@ http://localhost:5000
 - 📊 Uses Pandas for data processing
 - 🧮 Implements custom route optimization algorithm
 - 🗺️ Interactive maps using Folium
-- 💾 In-memory data processing without local storage
+- 💾 In-memory data processing without local storage.
 
 ## 📌 Requirements
 
@@ -134,3 +134,17 @@ http://localhost:5000
 docker run -p 5000:5000 routeoptima
 ```
 
+
+
+
+FInal run command 
+
+python3 -m venv venv
+source venv/bin/activate            # Windows PowerShell: .\venv\Scripts\Activate.ps1
+
+
+pip install --upgrade pip
+pip install -r requirements.txt
+
+
+python app.py
